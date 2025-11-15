@@ -5,101 +5,124 @@ import PersonalInfo from "./multistep-components/PersonalInfo";
 import MedicalInfo from "./multistep-components/MedicalInfo";
 import DonationInfo from "./multistep-components/DonationInfo";
 
-const STEPS = ["Personal Info", "Mediacal History", "Donation Preference"];
-const PERSONAL_INFO_CONFIG = [
-  {
-    label: "Full Name",
-    type: "text",
-    min: "3",
-    max: "15",
-    required: true,
-  },
-  {
-    label: "Email",
-    type: "email",
-    required: true,
-  },
-  {
-    label: "Phone",
-    type: "number",
-    required: true,
-  },
-  {
-    labe: "Gender",
-    type: "radio",
-    required: true,
-  },
-];
-const MEDICAL_HISTORY_CONFIG = [
-  {
-    label: "Blood Group",
-    type: "select",
-    required: true,
-  },
-  {
-    label: "Any active health issues",
-    type: "text",
-    required: false,
-  },
-  {
-    label: "Are you feeling well today?",
-    type: "radio",
-    required: true,
-  },
-];
+const STEPS = ["Personal Info", "Medical History", "Donation Preference"];
 
-const DONATION_PREFERENCE_CONFIG = [
-  {
-    label: "Donation Type",
-    type: "select",
-    required: true,
-  },
-  {
-    label: "Location Available",
-    type: "text",
-    required: true,
-  },
-  {
-    label: "Can we contact for any requirement",
-    type: "radio",
-    required: true,
-  },
-];
-
-const renderCurrentStep = (step: number) => {
-  switch (step) {
-    case 0:
-      return <PersonalInfo />;
-    case 1:
-      return <MedicalInfo />;
-    case 2:
-      return <DonationInfo />;
-    default:
-      return <PersonalInfo />;
-  }
+type Personal = {
+  fullName: string;
+  email: string;
+  phone: string;
+  gender: string;
 };
 
-const CollectInfo = () => {
+type Medical = {
+  bloodGroup: string;
+  activeHealthIssues: string;
+  feelingWellToday: string;
+};
+
+type Donation = {
+  donationType: string;
+  locationAvailable: string;
+  canWeContact: string;
+};
+
+export default function CollectInfo() {
   const [currentStep, setCurrentStep] = useState<number>(0);
+
+  // collected data
+  const [personal, setPersonal] = useState<Personal>({
+    fullName: "",
+    email: "",
+    phone: "",
+    gender: "",
+  });
+
+  const [medical, setMedical] = useState<Medical>({
+    bloodGroup: "",
+    activeHealthIssues: "",
+    feelingWellToday: "Yes",
+  });
+
+  const [donation, setDonation] = useState<Donation>({
+    donationType: "Whole Blood",
+    locationAvailable: "",
+    canWeContact: "Yes",
+  });
+
+  const handleNextFromPersonal = (data: Personal) => {
+    setPersonal(data);
+    setCurrentStep(1);
+  };
+
+  const handleNextFromMedical = (data: Medical) => {
+    setMedical(data);
+    setCurrentStep(2);
+  };
+
+  const handleBackFromMedical = () => setCurrentStep(0);
+  const handleBackFromDonation = () => setCurrentStep(1);
+
+  const handleSubmit = (data: Donation) => {
+    setDonation(data);
+
+    // final combined payload
+    const payload = {
+      personal,
+      medical,
+      donation: data,
+    };
+
+    console.log("Final payload", payload);
+    // Call your API here...
+    // e.g., fetch('/api/submit', { method: 'POST', body: JSON.stringify(payload) })
+    alert("Submitted! Check console for payload.");
+  };
+
   return (
-    <div>
+    <div className="max-w-2xl mx-auto p-4">
       <h2 className="text-center text-2xl font-semibold">
         Please enter the details to complete the account
       </h2>
 
       <div className="flex justify-center items-center gap-x-4 mt-6 w-full lg:gap-x-16 p-4">
         {STEPS.map((step, index) => {
+          const isActive = index === currentStep;
+          const isClickable = index <= currentStep; // allow going back freely
           return (
-            <div key={step + index} onClick={() => setCurrentStep(index)}>
+            <button
+              key={step + index}
+              onClick={() => isClickable && setCurrentStep(index)}
+              className={`px-3 py-1 rounded ${
+                isActive ? "bg-sky-600 text-white" : "bg-gray-100"
+              }`}
+            >
               {step}
-            </div>
+            </button>
           );
         })}
       </div>
 
-      {renderCurrentStep(currentStep)}
+      <div className="mt-6 bg-white shadow rounded p-6">
+        {currentStep === 0 && (
+          <PersonalInfo initial={personal} onNext={handleNextFromPersonal} />
+        )}
+
+        {currentStep === 1 && (
+          <MedicalInfo
+            initial={medical}
+            onBack={handleBackFromMedical}
+            onNext={handleNextFromMedical}
+          />
+        )}
+
+        {currentStep === 2 && (
+          <DonationInfo
+            initial={donation}
+            onBack={handleBackFromDonation}
+            onSubmit={handleSubmit}
+          />
+        )}
+      </div>
     </div>
   );
-};
-
-export default CollectInfo;
+}

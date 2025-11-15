@@ -6,14 +6,16 @@ export const personalInfoSchema = z.object({
     .min(3, "Name must be at least 3 characters")
     .max(15, "Name must be at most 15 characters"),
 
-  email: z.string().email("Invalid email address"),
+  dob: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
 
   phone: z
     .string()
     .min(10, "Phone must be at least 10 digits")
     .max(15, "Phone too long"),
 
-  gender: z.enum(["Male", "Female", "Other"] as const, "Gender is required"),
+  //   gender: z.enum(["Male", "Female", "Other"] as const, "Gender is required"),
 });
 
 export const medicalHistorySchema = z.object({
@@ -46,4 +48,4 @@ export const fullMultiStepFormSchema = z.object({
   donation: donationPreferenceSchema,
 });
 
-export type fullMultiStepFormSchema = z.infer<typeof fullMultiStepFormSchema>;
+export type FullMultiStepForm = z.infer<typeof fullMultiStepFormSchema>;
