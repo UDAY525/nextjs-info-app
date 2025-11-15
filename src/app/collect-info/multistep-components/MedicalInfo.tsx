@@ -1,46 +1,24 @@
-import React, { useState } from "react";
-
-type Props = {
-  initial: {
-    bloodGroup: string;
-    activeHealthIssues: string;
-    feelingWellToday: string;
-  };
-  onBack: () => void;
-  onNext: (data: Props["initial"]) => void;
-};
+// multistep-components/MedicalInfo.tsx
+import React from "react";
+import { useFormContext } from "react-hook-form";
+import { getErrorMessage } from "../formUtils";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
-export default function MedicalInfo({ initial, onBack, onNext }: Props) {
-  const [form, setForm] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => setForm((s) => ({ ...s, [e.target.name]: e.target.value }));
-
-  const validateAndNext = () => {
-    if (!form.bloodGroup) {
-      setError("Please select a blood group.");
-      return;
-    }
-    if (!form.feelingWellToday) {
-      setError("Please answer whether you're feeling well.");
-      return;
-    }
-    setError(null);
-    onNext(form);
-  };
+export default function MedicalInfo() {
+  const { register, formState } = useFormContext();
+  const bgError = getErrorMessage(formState.errors, "medical.bloodGroup");
+  const feelError = getErrorMessage(
+    formState.errors,
+    "medical.feelingWellToday"
+  );
 
   return (
     <div className="grid gap-4">
       <div>
         <label className="block text-sm font-medium">Blood Group</label>
         <select
-          name="bloodGroup"
-          value={form.bloodGroup}
-          onChange={handleChange}
+          {...register("medical.bloodGroup")}
           className="w-full px-3 py-2 border rounded"
         >
           <option value="">Select blood group</option>
@@ -50,6 +28,7 @@ export default function MedicalInfo({ initial, onBack, onNext }: Props) {
             </option>
           ))}
         </select>
+        {bgError && <p className="text-sm text-red-500">{bgError}</p>}
       </div>
 
       <div>
@@ -57,9 +36,7 @@ export default function MedicalInfo({ initial, onBack, onNext }: Props) {
           Active Health Issues (optional)
         </label>
         <input
-          name="activeHealthIssues"
-          value={form.activeHealthIssues}
-          onChange={handleChange}
+          {...register("medical.activeHealthIssues")}
           className="w-full px-3 py-2 border rounded"
           placeholder="e.g., asthma"
         />
@@ -73,44 +50,21 @@ export default function MedicalInfo({ initial, onBack, onNext }: Props) {
           <label className="inline-flex items-center gap-2">
             <input
               type="radio"
-              name="feelingWellToday"
               value="Yes"
-              checked={form.feelingWellToday === "Yes"}
-              onChange={handleChange}
+              {...register("medical.feelingWellToday")}
             />
             Yes
           </label>
           <label className="inline-flex items-center gap-2">
             <input
               type="radio"
-              name="feelingWellToday"
               value="No"
-              checked={form.feelingWellToday === "No"}
-              onChange={handleChange}
+              {...register("medical.feelingWellToday")}
             />
             No
           </label>
         </div>
-      </div>
-
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-
-      <div className="flex justify-between mt-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 py-2 border rounded"
-        >
-          Back
-        </button>
-
-        <button
-          type="button"
-          onClick={validateAndNext}
-          className="px-4 py-2 bg-sky-600 text-white rounded"
-        >
-          Next
-        </button>
+        {feelError && <p className="text-sm text-red-500">{feelError}</p>}
       </div>
     </div>
   );
