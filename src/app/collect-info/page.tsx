@@ -1,7 +1,7 @@
 // CollectInfo.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm, FormProvider, type FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -90,6 +90,59 @@ export default function CollectInfo() {
     // send to server here
   };
 
+  const stepRef = useRef<(HTMLButtonElement | null)[]>([]);
+  const stepRefProgSect = useRef<HTMLDivElement | null>(null);
+  // const [progressMargin, setProgressMargin] = useState({
+  //   marginLeft: 0,
+  //   marginRight: 0,
+  // });
+  const [sectWidth, setSectWidth] = useState<number>(0);
+
+  // useEffect(() => {
+  //   // If refs are not assigned yet, skip
+  //   if (!stepRef.current.length) return;
+
+  //   const first = stepRef.current[0];
+  //   const last = stepRef.current[STEPS.length - 1];
+
+  //   if (!first || !last) return; // Safety check
+
+  //   const ml = first.offsetWidth / 2;
+  //   const mr = last.offsetWidth / 2;
+
+  //   setProgressMargin({ marginLeft: ml, marginRight: mr });
+  // }, [stepRef, STEPS]);
+
+  // useEffect(() => {
+  //   if (!stepRefProgSect.current) return;
+  //   setSectWidth(stepRefProgSect?.current?.offsetWidth);
+  // }, []);
+
+  useEffect(() => {
+    const el = stepRefProgSect.current;
+    if (!el) return;
+
+    // Set initial value once
+    const initial = el.offsetWidth;
+    setSectWidth((prev) => (prev === initial ? prev : initial));
+
+    // Observe subsequent size changes
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        setSectWidth((prev) => (prev === w ? prev : w));
+      }
+    });
+
+    ro.observe(el);
+
+    return () => ro.disconnect();
+  }, []);
+
+  const calculateProgressBarWidth = () => {
+    return ((currentStep - 1) / (STEPS.length - 1)) * 100;
+  };
+
   return (
     <FormProvider {...methods}>
       <form
@@ -100,19 +153,47 @@ export default function CollectInfo() {
           Please enter the details to complete the account
         </h2>
 
-        <div className="flex justify-center gap-4 mt-6">
+        <div
+          className="flex justify-between text-xs lg:px-12 relative gap-4 mt-6"
+          ref={stepRefProgSect}
+        >
           {STEPS.map((s, i) => (
             <button
               key={s + i}
               type="button"
               onClick={() => handleStepClick(i)}
-              className={`px-3 py-1 rounded ${
-                i === currentStep ? "bg-sky-600 text-white" : "bg-gray-100"
+              ref={(el) => {
+                stepRef.current[i] = el;
+              }}
+              className={`px-2 py-1 z-10 rounded ${
+                i === currentStep
+                  ? "bg-sky-600 text-white"
+                  : i < currentStep
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-100"
               }`}
             >
               {s}
             </button>
           ))}
+
+          <div
+            id="progress-bar"
+            className="absolute h-1 top-1/2 w-full bg-gray-300"
+            style={{
+              marginLeft: `auto`,
+              marginRight: `auto`,
+              // width: `calc(100% - ${
+              //   progressMargin.marginLeft + progressMargin.marginRight
+              // }px)`,
+              width: `${sectWidth}px`,
+            }}
+          >
+            <div
+              className="h-1 bg-green-300 w-0"
+              style={{ width: `${calculateProgressBarWidth()}%` }}
+            ></div>
+          </div>
         </div>
 
         <div className="mt-6 bg-white shadow rounded p-6">
